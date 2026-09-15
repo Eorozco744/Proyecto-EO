@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Calculadora de Materiales - Elio Orozco</title>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@gradio/lite/dist/lite.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@gradio/lite/dist/lite.css" />
+</head>
+<body style="margin: 0; padding: 0;">
+
+    <gradio-lite theme="light">
+        <gradio-requirements>
+            reportlab
+        </gradio-requirements>
+
+        <gradio-file name="app.py">
+import os
+import math
+import gradio as gr
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+
+TABLA_DOSIFICACIONES = {
+    "1:2:2.5 (3000 PSI)": {"cemento": 8.94, "arena": 0.60, "piedrin": 0.76},
+    "1:2:3 (2800 PSI)": {"cemento": 8.23, "arena": 0.555, "piedrin": 0.835},
+    "1:2.5:4 (2000 PSI)": {"cemento": 6.58, "arena": 0.555, "piedrin": 0.89},
+    "1:3:3 (1800 PSI)": {"cemento": 7.05, "arena": 0.715, "piedrin": 0.715},
+    "1:3:4 (1500 PSI)": {"cemento": 6.11, "arena": 0.625, "piedrin": 0.835}
+}
+
+TABLA_ACERO_PESOS = {
+    "N2 (1/4)": {"kg_m": 0.249, "lb_m": 0.5489},
+    "N3 (3/8)": {"kg_m": 0.590, "lb_m": 1.3007},
+    "N4 (1/2)": {"kg_m": 0.994, "lb_m": 2.1913},
+    "N5 (5/8)": {"kg_m": 1.552, "lb_m": 3.4215},
+    "N6 (3/4)": {"kg_m": 2.235, "lb_m": 4.9272}
+}
+
+NOTA_RECOMENDACION = "Nota: Se recomienda el acompañamiento de un especialista en la construcción para toda obra civil."
+
+def crear_pdf(titulo, proyecto, cliente, datos_tabla):
+    nombre_archivo = "Estimacion_Materiales.pdf"
+    doc = SimpleDocTemplate(nombre_archivo, pagesize=letter, rightMargin=54, leftMargin=54, topMargin=54, bottomMargin=54)
+    story = []
+    styles = getSampleStyleSheet()
+    titulo_style = ParagraphStyle('T', parent=styles['Heading1'], fontSize=16, textColor=colors.HexColor("#1E3A8A"))
+    nota_style = ParagraphStyle('N', parent=styles['Italic'], fontSize=9, textColor=colors.HexColor("#475569"))
+
+    story.append(Paragraph(titulo, titulo_style))
+    story.append(Paragraph(f"<b>Proyecto:</b> {proyecto} | <b>Cliente:</b> {cliente}", styles['Normal']))
+    story.append(Spacer(1, 15))
+
+    t = Table(datos_tabla, colWidths=[200, 120, 130])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#1E3A8A")),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
+        ('PADDING', (0,0), (-1,-1), 6)
+    ]))
+
+    story.append(t)
+    story.append(Spacer(1, 25))
+    story.append(Paragraph(f"<b>* {NOTA_RECOMENDACION}</b>", nota_style))
+    doc.build(story)
+    return nombre_archivo
+
+def calc_bloques(proyecto, cliente, largo, alto, desp):
+    area_m2 = largo * alto
+    factor = 1 + (desp / 100.0)
+    bloques = round(area_m2 * 12.5 * factor)
+    cemento = round(area_m2 * 0.25 * factor, 1)
+    arena = round(area_m2 * 0.025 * factor, 2)
+    arena_yd3 = round(arena * 1.30795, 2)
+
+    tabla = [
+        ["Material / Insumo", "Cantidad", "Unidad"],
+        ["Bloques (12x20x40 cm)", f"{bloques}", "Unidades"],
+        ["Cemento (Mortero pegado)", f"{cemento}", "Bolsas (42.5 kg)"],
+        ["Arena fina", f"{arena} m³", f"{arena_yd3} Yardas³"]
+    ]
+    pdf = crear_pdf("ESTIMACIÓN: MAMPOSTERÍA DE BLOQUE", proyecto, cliente, tabla)
+    return f"✅ Cálculo realizado: {bloques} bloques requeridos.", pdf
+
+def calc_cantera(proyecto, cliente, largo, alto, desp):
+    area_m2 = largo * alto
+    factor = 1 + (desp / 100.0)
+    piedras = round(area_m2 * 4.17 * factor)
+    cemento = round(area_m2 * 0.18 * factor, 1)
+    arena = round(area_m2 * 0.03 * factor, 2)
+
+    tabla = [
+        ["Material / Insumo", "Cantidad", "Unidad"],
+        ["Piedras Canteras (0.40x0.60m)", f"{piedras}", "Unidades"],
+        ["Cemento (Pegado)", f"{cemento}", "Bolsas (42.5 kg)"],
+        ["Arena", f"{arena} m³", "Metros Cúbicos"]
+    ]
+    pdf = crear_pdf("ESTIMACIÓN: PIEDRA CANTERA", proyecto, cliente, tabla)
+    return f"✅ Cálculo realizado: {piedras} piedras de cantera requeridas.", pdf
+
+def calc_concreto(proyecto, cliente, vol, prop):
+    d = TABLA_DOSIFICACIONES[prop]
+    cemento = round(vol * d["cemento"], 1)
+    arena = round(vol * d["arena"], 2)
+    piedrin = round(vol * d["piedrin"], 2)
+
+    tabla = [
+        ["Insumo (Dosificación)", "Cantidad", "Equivalente en Bidones"],
+        ["Cemento (Sacos 42.5 kg)", f"{cemento}", "Sacos"],
+        ["Arena", f"{arena} m³", f"{round(arena/0.02)} Bidones"],
+        ["Piedrín", f"{piedrin} m³", f"{round(piedrin/0.02)} Bidones"]
+    ]
+    pdf = crear_pdf("DOSIFICACIÓN DE CONCRETO", proyecto, cliente, tabla)
+    return f"✅ Concreto dosificado para {vol} m³.", pdf
+
+def calc_acero(proyecto, cliente, longitud, varillas_seccion, dia):
+    d = TABLA_ACERO_PESOS[dia]
+    long_total = longitud * varillas_seccion
+    peso_lb = round(long_total * d["lb_m"], 2)
+    qq = round(peso_lb / 100.0, 2)
+    varillas_6m = round(long_total / 6.0, 1)
+
+    tabla = [
+        ["Concepto Acero", "Cantidad", "Unidad"],
+        ["Longitud total requerida", f"{long_total}", "Metros"],
+        ["Peso total estimado", f"{peso_lb} lbs", f"{qq} Quintales"],
+        ["Varillas de 6m aproximadas", f"{varillas_6m}", "Varillas"]
+    ]
+    pdf = crear_pdf("CÁLCULO DE ACERO DE REFUERZO", proyecto, cliente, tabla)
+    return f"✅ Acero calculado: {qq} Quintales requeridos.", pdf
+
+with gr.Blocks(title="Calculadora de Materiales") as app:
+    gr.Markdown("# 🏗️ Calculadora Técnica de Materiales y Estructuras")
+    gr.Markdown("### Elaborado por El Ingeniero Elio Orozco")
+    
+    with gr.Row():
+        txt_proyecto = gr.Textbox(value="Muro Perimetral", label="Nombre del Proyecto")
+        txt_cliente = gr.Textbox(value="Cliente General", label="Cliente / Propietario")
+
+    with gr.Tabs():
+        with gr.TabItem("🧱 Pared de Bloques"):
+            with gr.Row():
+                l_b = gr.Number(value=10.0, label="Largo (m)")
+                h_b = gr.Number(value=2.5, label="Alto (m)")
+                d_b = gr.Number(value=5.0, label="Desperdicio (%)")
+            btn_b = gr.Button("Calcular Bloques")
+            res_b = gr.Textbox(label="Resultado")
+            pdf_b = gr.File(label="Descargar PDF")
+            btn_b.click(calc_bloques, inputs=[txt_proyecto, txt_cliente, l_b, h_b, d_b], outputs=[res_b, pdf_b])
+
+        with gr.TabItem("🪨 Piedra Cantera"):
+            with gr.Row():
+                l_c = gr.Number(value=5.0, label="Largo (m)")
+                h_c = gr.Number(value=2.75, label="Alto (m)")
+                d_c = gr.Number(value=5.0, label="Desperdicio (%)")
+            btn_c = gr.Button("Calcular Cantera")
+            res_c = gr.Textbox(label="Resultado")
+            pdf_c = gr.File(label="Descargar PDF")
+            btn_c.click(calc_cantera, inputs=[txt_proyecto, txt_cliente, l_c, h_c, d_c], outputs=[res_c, pdf_c])
+
+        with gr.TabItem("🥣 Concreto Estructural"):
+            with gr.Row():
+                vol_conc = gr.Number(value=0.88, label="Volumen total (m³)")
+                prop_conc = gr.Dropdown(choices=list(TABLA_DOSIFICACIONES.keys()), value="1:2:3 (2800 PSI)", label="Proporción / Resistencia")
+            btn_conc = gr.Button("Calcular Concreto")
+            res_conc = gr.Textbox(label="Resultado")
+            pdf_conc = gr.File(label="Descargar PDF")
+            btn_conc.click(calc_concreto, inputs=[txt_proyecto, txt_cliente, vol_conc, prop_conc], outputs=[res_conc, pdf_conc])
+
+        with gr.TabItem("⛓️ Acero de Refuerzo"):
+            with gr.Row():
+                long_a = gr.Number(value=12.0, label="Longitud total del elemento (m)")
+                var_a = gr.Number(value=4, label="Varillas longitudinales en sección")
+                dia_a = gr.Dropdown(choices=list(TABLA_ACERO_PESOS.keys()), value="N4 (1/2)", label="Diámetro del acero")
+            btn_a = gr.Button("Calcular Acero")
+            res_a = gr.Textbox(label="Resultado")
+            pdf_a = gr.File(label="Descargar PDF")
+            btn_a.click(calc_acero, inputs=[txt_proyecto, txt_cliente, long_a, var_a, dia_a], outputs=[res_a, pdf_a])
+
+    gr.Markdown("---")
+    gr.Markdown("> 💡 **Nota importante:** *Se recomienda el acompañamiento de un especialista en la construcción para toda obra civil.*")
+
+app.launch()
+        </gradio-file>
+    </gradio-lite>
+
+</body>
+</html>
