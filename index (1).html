@@ -16,6 +16,10 @@
         <gradio-file name="app.py">
 import os
 import math
+import re
+import io
+import tempfile
+from datetime import datetime
 import gradio as gr
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
@@ -40,9 +44,32 @@ TABLA_ACERO_PESOS = {
 
 NOTA_RECOMENDACION = "Nota: Se recomienda el acompañamiento de un especialista en la construcción para toda obra civil."
 
+
+def _format_number(value, decimals=0):
+    try:
+        if value is None:
+            return ""
+        if decimals == 0:
+            return f"{int(round(value)):,}"
+        else:
+            return f"{value:,.{decimals}f}"
+    except Exception:
+        return str(value)
+
+
+def _sanitize_filename(text):
+    text = (text or "proyecto").strip()
+    # keep only alphanumerics, dash and underscore
+    safe = re.sub(r'[^A-Za-z0-9_-]', '_', text)
+    return safe[:50]
+
+
 def crear_pdf(titulo, proyecto, cliente, datos_tabla):
-    nombre_archivo = "Estimacion_Materiales.pdf"
-    doc = SimpleDocTemplate(nombre_archivo, pagesize=letter, rightMargin=54, leftMargin=54, topMargin=54, bottomMargin=54)
+    """Build the PDF in-memory and write to a unique temporary file.
+    Returns the filesystem path to the PDF so Gradio can serve it.
+    """
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=54, leftMargin=54, topMargin=54, bottomMargin=54)
     story = []
     styles = getSampleStyleSheet()
     titulo_style = ParagraphStyle('T', parent=styles['Heading1'], fontSize=16, textColor=colors.HexColor("#1E3A8A"))
@@ -64,9 +91,33 @@ def crear_pdf(titulo, proyecto, cliente, datos_tabla):
     story.append(Spacer(1, 25))
     story.append(Paragraph(f"<b>* {NOTA_RECOMENDACION}</b>", nota_style))
     doc.build(story)
-    return nombre_archivo
+
+    buffer.seek(0)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe = _sanitize_filename(proyecto)
+    filename = f"Estimacion_{safe}_{timestamp}.pdf"
+    path = os.path.join(tempfile.gettempdir(), filename)
+    with open(path, "wb") as f:
+        f.write(buffer.read())
+    return path
+
 
 def calc_bloques(proyecto, cliente, largo, alto, desp):
+    # Validación básica
+    if largo is None or alto is None:
+        return "⚠️ Largo y alto son obligatorios.", None
+    try:
+        largo = float(largo)
+        alto = float(alto)
+        desp = float(desp or 0)
+    except Exception:
+        return "⚠️ Valores numéricos inválidos.", None
+
+    if largo <= 0 or alto <= 0:
+        return "⚠️ Largo y alto deben ser mayores que cero.", None
+    if desp < 0:
+        return "⚠️ El desperdicio no puede ser negativo.", None
+
     area_m2 = largo * alto
     factor = 1 + (desp / 100.0)
     bloques = round(area_m2 * 12.5 * factor)
@@ -76,14 +127,29 @@ def calc_bloques(proyecto, cliente, largo, alto, desp):
 
     tabla = [
         ["Material / Insumo", "Cantidad", "Unidad"],
-        ["Bloques (12x20x40 cm)", f"{bloques}", "Unidades"],
-        ["Cemento (Mortero pegado)", f"{cemento}", "Bolsas (42.5 kg)"],
-        ["Arena fina", f"{arena} m³", f"{arena_yd3} Yardas³"]
+        ["Bloques (12x20x40 cm)", f"{_format_number(bloques)}", "Unidades"],
+        ["Cemento (Mortero pegado)", f"{_format_number(cemento, 1)}", "Bolsas (42.5 kg)"],
+        ["Arena fina", f"{_format_number(arena, 2)} m³", f"{_format_number(arena_yd3,2)} yd³"]
     ]
     pdf = crear_pdf("ESTIMACIÓN: MAMPOSTERÍA DE BLOQUE", proyecto, cliente, tabla)
     return f"✅ Cálculo realizado: {bloques} bloques requeridos.", pdf
 
+
 def calc_cantera(proyecto, cliente, largo, alto, desp):
+    if largo is None or alto is None:
+        return "⚠️ Largo y alto son obligatorios.", None
+    try:
+        largo = float(largo)
+        alto = float(alto)
+        desp = float(desp or 0)
+    except Exception:
+        return "⚠️ Valores numéricos inválidos.", None
+
+    if largo <= 0 or alto <= 0:
+        return "⚠️ Largo y alto deben ser mayores que cero.", None
+    if desp < 0:
+        return "⚠️ El desperdicio no puede ser negativo.", None
+
     area_m2 = largo * alto
     factor = 1 + (desp / 100.0)
     piedras = round(area_m2 * 4.17 * factor)
@@ -92,30 +158,54 @@ def calc_cantera(proyecto, cliente, largo, alto, desp):
 
     tabla = [
         ["Material / Insumo", "Cantidad", "Unidad"],
-        ["Piedras Canteras (0.40x0.60m)", f"{piedras}", "Unidades"],
-        ["Cemento (Pegado)", f"{cemento}", "Bolsas (42.5 kg)"],
-        ["Arena", f"{arena} m³", "Metros Cúbicos"]
+        ["Piedras Canteras (0.40x0.60m)", f"{_format_number(piedras)}", "Unidades"],
+        ["Cemento (Pegado)", f"{_format_number(cemento,1)}", "Bolsas (42.5 kg)"],
+        ["Arena", f"{_format_number(arena,2)} m³", "Metros Cúbicos"]
     ]
     pdf = crear_pdf("ESTIMACIÓN: PIEDRA CANTERA", proyecto, cliente, tabla)
     return f"✅ Cálculo realizado: {piedras} piedras de cantera requeridas.", pdf
 
+
 def calc_concreto(proyecto, cliente, vol, prop):
-    d = TABLA_DOSIFICACIONES[prop]
+    try:
+        vol = float(vol)
+    except Exception:
+        return "⚠️ Volumen inválido.", None
+    if vol <= 0:
+        return "⚠️ El volumen debe ser mayor que cero.", None
+
+    d = TABLA_DOSIFICACIONES.get(prop)
+    if d is None:
+        return "���️ Proporción no válida. Seleccione una opción existente.", None
+
     cemento = round(vol * d["cemento"], 1)
     arena = round(vol * d["arena"], 2)
     piedrin = round(vol * d["piedrin"], 2)
 
     tabla = [
         ["Insumo (Dosificación)", "Cantidad", "Equivalente en Bidones"],
-        ["Cemento (Sacos 42.5 kg)", f"{cemento}", "Sacos"],
-        ["Arena", f"{arena} m³", f"{round(arena/0.02)} Bidones"],
-        ["Piedrín", f"{piedrin} m³", f"{round(piedrin/0.02)} Bidones"]
+        ["Cemento (Sacos 42.5 kg)", f"{_format_number(cemento,1)}", "Sacos"],
+        ["Arena", f"{_format_number(arena,2)} m³", f"{_format_number(round(arena/0.02),0)} Bidones"],
+        ["Piedrín", f"{_format_number(piedrin,2)} m³", f"{_format_number(round(piedrin/0.02),0)} Bidones"]
     ]
     pdf = crear_pdf("DOSIFICACIÓN DE CONCRETO", proyecto, cliente, tabla)
     return f"✅ Concreto dosificado para {vol} m³.", pdf
 
+
 def calc_acero(proyecto, cliente, longitud, varillas_seccion, dia):
-    d = TABLA_ACERO_PESOS[dia]
+    try:
+        longitud = float(longitud)
+        varillas_seccion = int(varillas_seccion)
+    except Exception:
+        return "⚠️ Longitud o número de varillas inválido.", None
+
+    if longitud <= 0 or varillas_seccion <= 0:
+        return "⚠️ La longitud y la cantidad de varillas deben ser mayores que cero.", None
+
+    d = TABLA_ACERO_PESOS.get(dia)
+    if d is None:
+        return "⚠️ Diámetro de acero no válido.", None
+
     long_total = longitud * varillas_seccion
     peso_lb = round(long_total * d["lb_m"], 2)
     qq = round(peso_lb / 100.0, 2)
@@ -123,9 +213,9 @@ def calc_acero(proyecto, cliente, longitud, varillas_seccion, dia):
 
     tabla = [
         ["Concepto Acero", "Cantidad", "Unidad"],
-        ["Longitud total requerida", f"{long_total}", "Metros"],
-        ["Peso total estimado", f"{peso_lb} lbs", f"{qq} Quintales"],
-        ["Varillas de 6m aproximadas", f"{varillas_6m}", "Varillas"]
+        ["Longitud total requerida", f"{_format_number(long_total,1)}", "Metros"],
+        ["Peso total estimado", f"{_format_number(peso_lb,2)} lbs", f"{_format_number(qq,2)} Quintales"],
+        ["Varillas de 6m aproximadas", f"{_format_number(varillas_6m,1)}", "Varillas"]
     ]
     pdf = crear_pdf("CÁLCULO DE ACERO DE REFUERZO", proyecto, cliente, tabla)
     return f"✅ Acero calculado: {qq} Quintales requeridos.", pdf
@@ -181,7 +271,9 @@ with gr.Blocks(title="Calculadora de Materiales") as app:
     gr.Markdown("---")
     gr.Markdown("> 💡 **Nota importante:** *Se recomienda el acompañamiento de un especialista en la construcción para toda obra civil.*")
 
-app.launch()
+# In Gradio Lite contexts the app is loaded by the host; app.launch() is optional. Keep it for local testing:
+if __name__ == "__main__":
+    app.launch()
         </gradio-file>
     </gradio-lite>
 

@@ -1,0 +1,2 @@
+gradio>=3.0
+reportlab>=3.6
