@@ -193,28 +193,39 @@
 
     .footer-note .note-text { flex: 1; }
 
-    /* Estilos exclusivos para la impresión / Guardar como PDF */
+    /* --- REGLAS CORREGIDAS PARA IMPRESIÓN Y PDF --- */
     @media print {
-      body * {
-        visibility: hidden;
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 0 !important;
       }
-      #printArea, #printArea * {
-        visibility: visible;
-      }
-      #printArea {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        background: #fff !important;
-        color: #000 !important;
-      }
-      .no-print {
+
+      .no-print, .example-box, .form-card, .footer-note, .tab-button, .form-check {
         display: none !important;
       }
+
+      .tab-content {
+        display: block !important;
+        page-break-inside: avoid;
+        margin-bottom: 20px;
+      }
+
       .card-shadow {
         box-shadow: none !important;
-        background: #fff !important;
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+      }
+
+      .result-box {
+        background: #ffffff !important;
+        border: 1px solid #ccc !important;
+        color: #000000 !important;
+      }
+
+      .table {
+        color: #000000 !important;
       }
     }
 
@@ -229,8 +240,7 @@
 </head>
 <body>
   <div class="container py-4 py-lg-5">
-    <!-- Contenedor principal que se imprimirá/exportará -->
-    <div id="printArea" class="card card-shadow p-3 p-md-4">
+    <div id="estimacion" class="card card-shadow p-3 p-md-4">
       
       <!-- Encabezado -->
       <div class="d-flex align-items-start justify-content-between mb-3">
@@ -258,7 +268,7 @@
         </div>
       </div>
 
-      <!-- Pestañas de Selección (Se ocultan al imprimir para mostrar todo ordenado) -->
+      <!-- Pestañas de Selección -->
       <div class="d-flex flex-wrap gap-2 mb-4 no-print">
         <button class="btn btn-outline-primary tab-button active" onclick="cambiarTab(0)">🧱 Pared de Bloques</button>
         <button class="btn btn-outline-primary tab-button" onclick="cambiarTab(1)">🪨 Piedra Cantera</button>
@@ -426,7 +436,7 @@
         <div class="note-text">💡 <b>Nota:</b> Se recomienda el acompañamiento de un especialista en construcción para toda obra civil.</div>
         <div class="d-flex gap-2 no-print">
           <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="copiarTodo()">Copiar todo</button>
-          <button class="btn btn-sm btn-success fw-bold" onclick="window.print()">📥 Descargar / Imprimir PDF</button>
+          <button class="btn btn-sm btn-success fw-bold" onclick="imprimirOExportarPDF()">📥 Descargar / Imprimir PDF</button>
         </div>
       </div>
 
@@ -487,4 +497,137 @@
     // Lógica de Cálculos
     function calcularBloques() {
       const area = n('largo_b') * n('alto_b');
-      const f = 1
+      const f = 1 + n('desp_b') / 100;
+      const bloques = Math.round(area * 12.5 * f);
+      const cemento = Math.round(area * 0.25 * f * 10) / 10;
+      const arena = Math.round(area * 0.025 * f * 100) / 100;
+      const piedra = Math.round(area * 0.03 * f * 100) / 100;
+
+      resultado('resultado_b', '🧱 Cálculo de Bloques', [
+        ['Bloques', bloques, 'Unidades', costo(bloques, 'precio_bloque')],
+        ['Cemento', cemento, 'Bolsas de 42.5 kg', costo(cemento, 'precio_cemento_b')],
+        ['Arena', arena, 'm³', costo(arena, 'precio_arena_b')],
+        ['Piedra', piedra, 'm³', costo(piedra, 'precio_piedra_b')]
+      ]);
+    }
+
+    function calcularCantera() {
+      const area = n('largo_c') * n('alto_c');
+      const f = 1 + n('desp_c') / 100;
+      const piedras = Math.round(area * 4.17 * f);
+      const cemento = Math.round(area * 0.18 * f * 10) / 10;
+      const arena = Math.round(area * 0.03 * f * 100) / 100;
+      const grava = Math.round(area * 0.04 * f * 100) / 100;
+
+      resultado('resultado_c', '🪨 Cálculo de Piedra Cantera', [
+        ['Piedras Canteras', piedras, 'Unidades', costo(piedras, 'precio_piedra_c')],
+        ['Cemento', cemento, 'Bolsas de 42.5 kg', costo(cemento, 'precio_cemento_c')],
+        ['Arena', arena, 'm³', costo(arena, 'precio_arena_c')],
+        ['Grava', grava, 'm³', costo(grava, 'precio_piedra_cantera')]
+      ]);
+    }
+
+    function calcularConcreto() {
+      const [cd, ad, pd] = document.getElementById('proporcion_conc').value.split('|').map(parseFloat);
+      const v = n('volumen_conc');
+      const cemento = Math.round(v * cd * 10) / 10;
+      const arena = Math.round(v * ad * 100) / 100;
+      const piedrin = Math.round(v * pd * 100) / 100;
+
+      resultado('resultado_conc', '🏗️ Cálculo de Concreto', [
+        ['Cemento', cemento, 'Sacos de 42.5 kg', costo(cemento, 'precio_cemento_conc')],
+        ['Arena', arena, 'm³', costo(arena, 'precio_arena_conc')],
+        ['Piedrín', piedrin, 'm³', costo(piedrin, 'precio_piedrin_conc')]
+      ]);
+    }
+
+    function calcularAcero() {
+      const total = n('longitud_a') * n('varillas_a');
+      const lb = Math.round(total * n('diametro_a') * 100) / 100;
+      const q = Math.round((lb / 100) * 100) / 100;
+      const varillas = Math.ceil(total / 6);
+
+      resultado('resultado_a', '⛓️ Cálculo de Acero', [
+        ['Longitud total', total, 'm', null],
+        ['Peso estimado', lb, 'lb', costo(lb, 'precio_varilla')],
+        ['Equivalente', q, 'quintales', null],
+        ['Varillas de 6 m', varillas, 'piezas', null]
+      ]);
+    }
+
+    // Renderizador de resultados en pantalla
+    function resultado(id, title, rows) {
+      const conCosto = rows.some(r => r[3] !== null);
+      const total = rows.reduce((s, r) => s + (r[3] || 0), 0);
+
+      const html = `
+        <div class="result-header">
+          <div class="result-icon">${title.slice(0, 2)}</div>
+          <div>
+            <h5 class="mb-0 fw-bold">${title}</h5>
+            <small class="text-muted">${conCosto ? 'Estimación con costos' : 'Estimación técnica de cantidades'}</small>
+          </div>
+          <div class="ms-auto d-flex gap-2 no-print">
+            <button class="btn btn-sm btn-outline-secondary" onclick="copiarSeccion('${id}')">Copiar</button>
+            <button class="btn btn-sm btn-primary" onclick="imprimirOExportarPDF()">PDF</button>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle mb-2">
+            <thead>
+              <tr class="table-light">
+                <th>Concepto</th>
+                <th>Cantidad</th>
+                <th>Unidad</th>
+                <th>Costo Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map(r => `
+                <tr>
+                  <td class="fw-semibold">${r[0]}</td>
+                  <td>${Number.isFinite(r[1]) ? r[1].toLocaleString('es-NI') : r[1]}</td>
+                  <td><span class="badge-soft">${r[2]}</span></td>
+                  <td>${r[3] !== null ? money(r[3]) : '—'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        ${conCosto ? `<div class="alert alert-success py-2 px-3 mb-0 fw-bold d-flex justify-content-between align-items-center"><span>Total Estimado:</span> <span>${money(total)}</span></div>` : ''}
+      `;
+
+      document.getElementById(id).innerHTML = html;
+    }
+
+    function copiarSeccion(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        navigator.clipboard.writeText(el.innerText).then(() => alert('Resultado copiado al portapapeles.'));
+      }
+    }
+
+    function copiarTodo() {
+      calcularBloques(); calcularCantera(); calcularConcreto(); calcularAcero();
+      const text = document.getElementById('estimacion').innerText;
+      navigator.clipboard.writeText(text).then(() => alert('Todo el contenido fue copiado al portapapeles.'));
+    }
+
+    // Función unificada que prepara todas las pestañas para que el visor PDF/impresora capture el reporte entero sin hojas vacías
+    function imprimirOExportarPDF() {
+      calcularBloques();
+      calcularCantera();
+      calcularConcreto();
+      calcularAcero();
+      window.print();
+    }
+
+    // Inicialización predeterminada
+    cambiarTab(0);
+    calcularBloques();
+    calcularCantera();
+    calcularConcreto();
+    calcularAcero();
+  </script>
+</body>
+</html>
