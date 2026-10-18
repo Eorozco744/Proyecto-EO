@@ -7,9 +7,6 @@
   
   <!-- Bootstrap 5.3.3 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  
-  <!-- html2pdf.js para exportar a PDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
     :root {
@@ -196,6 +193,31 @@
 
     .footer-note .note-text { flex: 1; }
 
+    /* Estilos exclusivos para la impresión / Guardar como PDF */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printArea, #printArea * {
+        visibility: visible;
+      }
+      #printArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: #fff !important;
+        color: #000 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .card-shadow {
+        box-shadow: none !important;
+        background: #fff !important;
+      }
+    }
+
     @media (max-width: 768px) {
       .tab-button {
         width: 100%;
@@ -207,7 +229,8 @@
 </head>
 <body>
   <div class="container py-4 py-lg-5">
-    <div id="estimacion" class="card card-shadow p-3 p-md-4">
+    <!-- Contenedor principal que se imprimirá/exportará -->
+    <div id="printArea" class="card card-shadow p-3 p-md-4">
       
       <!-- Encabezado -->
       <div class="d-flex align-items-start justify-content-between mb-3">
@@ -215,7 +238,7 @@
           <h1 class="header-title mb-1">🏗️ Calculadora de Materiales</h1>
           <p class="subheader mb-0">Elaborado por Ing. Elio Orozco</p>
         </div>
-        <div class="d-flex gap-2 align-items-center">
+        <div class="d-flex gap-2 align-items-center no-print">
           <div class="form-check form-switch">
             <input class="form-check-input" type="checkbox" id="themeToggle">
             <label class="form-check-label text-muted small" for="themeToggle">Tema oscuro</label>
@@ -235,8 +258,8 @@
         </div>
       </div>
 
-      <!-- Pestañas de Selección -->
-      <div class="d-flex flex-wrap gap-2 mb-4">
+      <!-- Pestañas de Selección (Se ocultan al imprimir para mostrar todo ordenado) -->
+      <div class="d-flex flex-wrap gap-2 mb-4 no-print">
         <button class="btn btn-outline-primary tab-button active" onclick="cambiarTab(0)">🧱 Pared de Bloques</button>
         <button class="btn btn-outline-primary tab-button" onclick="cambiarTab(1)">🪨 Piedra Cantera</button>
         <button class="btn btn-outline-primary tab-button" onclick="cambiarTab(2)">🏗️ Concreto</button>
@@ -245,8 +268,8 @@
 
       <!-- TAB 0: BLOQUES -->
       <div id="tab0" class="tab-content">
-        <div class="example-box"><b>💡 Ejemplo:</b> Un muro de 10 m × 2.5 m con 5% de desperdicio requiere aproximadamente 328 bloques, 6.6 bolsas de cemento y 0.25 m³ de arena.</div>
-        <div class="form-card">
+        <div class="example-box no-print"><b>💡 Ejemplo:</b> Un muro de 10 m × 2.5 m con 5% de desperdicio requiere aproximadamente 328 bloques, 6.6 bolsas de cemento y 0.25 m³ de arena.</div>
+        <div class="form-card no-print">
           <div class="row g-3">
             <div class="col-md-4">
               <label for="largo_b" class="form-label">Largo (m)</label>
@@ -280,14 +303,14 @@
           <div class="d-grid mt-3">
             <button class="btn btn-primary fw-bold py-2" onclick="calcularBloques()">Calcular Bloques</button>
           </div>
-          <div id="resultado_b" class="result-box"></div>
         </div>
+        <div id="resultado_b" class="result-box"></div>
       </div>
 
       <!-- TAB 1: CANTERA -->
       <div id="tab1" class="tab-content" style="display:none;">
-        <div class="example-box"><b>💡 Ejemplo:</b> Un muro de 5 m × 2.75 m con 5% de desperdicio requiere aproximadamente 60 piedras, 2.3 bolsas de cemento y 0.43 m³ de arena.</div>
-        <div class="form-card">
+        <div class="example-box no-print"><b>💡 Ejemplo:</b> Un muro de 5 m × 2.75 m con 5% de desperdicio requiere aproximadamente 60 piedras, 2.3 bolsas de cemento y 0.43 m³ de arena.</div>
+        <div class="form-card no-print">
           <div class="row g-3">
             <div class="col-md-4">
               <label for="largo_c" class="form-label">Largo (m)</label>
@@ -321,14 +344,14 @@
           <div class="d-grid mt-3">
             <button class="btn btn-primary fw-bold py-2" onclick="calcularCantera()">Calcular Cantera</button>
           </div>
-          <div id="resultado_c" class="result-box"></div>
         </div>
+        <div id="resultado_c" class="result-box"></div>
       </div>
 
       <!-- TAB 2: CONCRETO -->
       <div id="tab2" class="tab-content" style="display:none;">
-        <div class="example-box"><b>💡 Ejemplo:</b> Para 0.88 m³ de concreto 1:2:3 (2800 PSI), se requieren 7.2 sacos de cemento, 0.49 m³ de arena y 0.73 m³ de piedrín.</div>
-        <div class="form-card">
+        <div class="example-box no-print"><b>💡 Ejemplo:</b> Para 0.88 m³ de concreto 1:2:3 (2800 PSI), se requieren 7.2 sacos de cemento, 0.49 m³ de arena y 0.73 m³ de piedrín.</div>
+        <div class="form-card no-print">
           <div class="row g-3">
             <div class="col-md-6">
               <label for="volumen_conc" class="form-label">Volumen de concreto (m³)</label>
@@ -359,14 +382,14 @@
           <div class="d-grid mt-3">
             <button class="btn btn-primary fw-bold py-2" onclick="calcularConcreto()">Calcular Concreto</button>
           </div>
-          <div id="resultado_conc" class="result-box"></div>
         </div>
+        <div id="resultado_conc" class="result-box"></div>
       </div>
 
       <!-- TAB 3: ACERO -->
       <div id="tab3" class="tab-content" style="display:none;">
-        <div class="example-box"><b>💡 Ejemplo:</b> Para 12 m con 4 varillas N4 (1/2"), se requieren 48 m, aproximadamente 105.19 lb y 8 varillas de 6 m.</div>
-        <div class="form-card">
+        <div class="example-box no-print"><b>💡 Ejemplo:</b> Para 12 m con 4 varillas N4 (1/2"), se requieren 48 m, aproximadamente 105.19 lb y 8 varillas de 6 m.</div>
+        <div class="form-card no-print">
           <div class="row g-3">
             <div class="col-md-4">
               <label for="longitud_a" class="form-label">Longitud del elemento (m)</label>
@@ -394,16 +417,16 @@
           <div class="d-grid mt-3">
             <button class="btn btn-primary fw-bold py-2" onclick="calcularAcero()">Calcular Acero</button>
           </div>
-          <div id="resultado_a" class="result-box"></div>
         </div>
+        <div id="resultado_a" class="result-box"></div>
       </div>
 
       <!-- Pie de página con acciones generales -->
       <div class="footer-note mt-4">
         <div class="note-text">💡 <b>Nota:</b> Se recomienda el acompañamiento de un especialista en construcción para toda obra civil.</div>
-        <div class="d-flex gap-2">
-          <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="copiar('estimacion')">Copiar todo</button>
-          <button class="btn btn-sm btn-success fw-bold" onclick="pdf()">Descargar PDF</button>
+        <div class="d-flex gap-2 no-print">
+          <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="copiarTodo()">Copiar todo</button>
+          <button class="btn btn-sm btn-success fw-bold" onclick="window.print()">📥 Descargar / Imprimir PDF</button>
         </div>
       </div>
 
@@ -464,210 +487,4 @@
     // Lógica de Cálculos
     function calcularBloques() {
       const area = n('largo_b') * n('alto_b');
-      const f = 1 + n('desp_b') / 100;
-      const bloques = Math.round(area * 12.5 * f);
-      const cemento = Math.round(area * 0.25 * f * 10) / 10;
-      const arena = Math.round(area * 0.025 * f * 100) / 100;
-      const piedra = Math.round(area * 0.03 * f * 100) / 100;
-
-      resultado('resultado_b', '🧱 Cálculo de Bloques', [
-        ['Bloques', bloques, 'Unidades', costo(bloques, 'precio_bloque')],
-        ['Cemento', cemento, 'Bolsas de 42.5 kg', costo(cemento, 'precio_cemento_b')],
-        ['Arena', arena, 'm³', costo(arena, 'precio_arena_b')],
-        ['Piedra', piedra, 'm³', costo(piedra, 'precio_piedra_b')]
-      ]);
-    }
-
-    function calcularCantera() {
-      const area = n('largo_c') * n('alto_c');
-      const f = 1 + n('desp_c') / 100;
-      const piedras = Math.round(area * 4.17 * f);
-      const cemento = Math.round(area * 0.18 * f * 10) / 10;
-      const arena = Math.round(area * 0.03 * f * 100) / 100;
-      const grava = Math.round(area * 0.04 * f * 100) / 100;
-
-      resultado('resultado_c', '🪨 Cálculo de Piedra Cantera', [
-        ['Piedras Canteras', piedras, 'Unidades', costo(piedras, 'precio_piedra_c')],
-        ['Cemento', cemento, 'Bolsas de 42.5 kg', costo(cemento, 'precio_cemento_c')],
-        ['Arena', arena, 'm³', costo(arena, 'precio_arena_c')],
-        ['Grava', grava, 'm³', costo(grava, 'precio_piedra_cantera')]
-      ]);
-    }
-
-    function calcularConcreto() {
-      const [cd, ad, pd] = document.getElementById('proporcion_conc').value.split('|').map(parseFloat);
-      const v = n('volumen_conc');
-      const cemento = Math.round(v * cd * 10) / 10;
-      const arena = Math.round(v * ad * 100) / 100;
-      const piedrin = Math.round(v * pd * 100) / 100;
-
-      resultado('resultado_conc', '🏗️ Cálculo de Concreto', [
-        ['Cemento', cemento, 'Sacos de 42.5 kg', costo(cemento, 'precio_cemento_conc')],
-        ['Arena', arena, 'm³', costo(arena, 'precio_arena_conc')],
-        ['Piedrín', piedrin, 'm³', costo(piedrin, 'precio_piedrin_conc')]
-      ]);
-    }
-
-    function calcularAcero() {
-      const total = n('longitud_a') * n('varillas_a');
-      const lb = Math.round(total * n('diametro_a') * 100) / 100;
-      const q = Math.round((lb / 100) * 100) / 100;
-      const varillas = Math.ceil(total / 6);
-
-      resultado('resultado_a', '⛓️ Cálculo de Acero', [
-        ['Longitud total', total, 'm', null],
-        ['Peso estimado', lb, 'lb', costo(lb, 'precio_varilla')],
-        ['Equivalente', q, 'quintales', null],
-        ['Varillas de 6 m', varillas, 'piezas', null]
-      ]);
-    }
-
-    function sanitizeFilename(s){
-      return (s || '').toString().trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_\-\.]/g, '');
-    }
-
-    function escapeHtml(unsafe) {
-      return (unsafe + '').replace(/[&<>"']/g, function(m) {
-        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m];
-      });
-    }
-
-    // Renderizador de resultados en pantalla
-    function resultado(id, title, rows) {
-      const conCosto = rows.some(r => r[3] !== null);
-      const total = rows.reduce((s, r) => s + (r[3] || 0), 0);
-
-      const html = `
-        <div class="result-header">
-          <div class="result-icon">${title.slice(0, 2)}</div>
-          <div>
-            <h5 class="mb-0 fw-bold">${title}</h5>
-            <small class="text-muted">${conCosto ? 'Estimación con costos' : 'Estimación técnica de cantidades'}</small>
-          </div>
-          <div class="ms-auto d-flex gap-2">
-            <button class="btn btn-sm btn-outline-secondary" onclick="copiar('${id}')">Copiar</button>
-            <button class="btn btn-sm btn-primary" onclick="pdf()">PDF</button>
-          </div>
-        </div>
-        <div class="table-responsive">
-          <table class="table table-sm table-hover align-middle mb-2">
-            <thead>
-              <tr class="table-light">
-                <th>Concepto</th>
-                <th>Cantidad</th>
-                <th>Unidad</th>
-                <th>Costo Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rows.map(r => `
-                <tr>
-                  <td class="fw-semibold">${r[0]}</td>
-                  <td>${Number.isFinite(r[1]) ? r[1].toLocaleString('es-NI') : r[1]}</td>
-                  <td><span class="badge-soft">${r[2]}</span></td>
-                  <td>${r[3] !== null ? money(r[3]) : '—'}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-        ${conCosto ? `<div class="alert alert-success py-2 px-3 mb-0 fw-bold d-flex justify-content-between align-items-center"><span>Total Estimado:</span> <span>${money(total)}</span></div>` : ''}
-      `;
-
-      document.getElementById(id).innerHTML = html;
-    }
-
-    // Generador de reporte limpio para PDF
-    function buildPrintableReport() {
-      calcularBloques(); 
-      calcularCantera(); 
-      calcularConcreto(); 
-      calcularAcero();
-
-      const project = document.getElementById('proyecto').value || 'Estimación de materiales';
-      const client = document.getElementById('cliente').value || 'Cliente General';
-      const today = new Date();
-      const dateText = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-
-      const container = document.createElement('div');
-      container.style.padding = '20px';
-      container.style.fontFamily = 'Arial, sans-serif';
-      container.style.color = '#1f2937';
-      container.style.background = '#ffffff';
-      container.style.width = '210mm';
-
-      container.innerHTML = `
-        <div style="text-align:center; border-bottom: 2px solid #4f46e5; padding-bottom: 12px; margin-bottom: 20px;">
-          <h2 style="margin:0; color:#1f2a44; font-size:24px;">🏗️ ${escapeHtml(project)}</h2>
-          <div style="font-size:14px; color:#475569; margin-top:6px;"><b>Cliente:</b> ${escapeHtml(client)} | <b>Fecha:</b> ${dateText}</div>
-          <div style="font-size:12px; color:#6366f1; margin-top:4px;">Elaborado por Ing. Elio Orozco</div>
-        </div>
-      `;
-
-      const sectionIds = ['resultado_b', 'resultado_c', 'resultado_conc', 'resultado_a'];
-      
-      sectionIds.forEach((id) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        const clone = el.cloneNode(true);
-        
-        // Quitar botones de la versión PDF
-        clone.querySelectorAll('button').forEach(btn => btn.remove());
-        
-        const wrapper = document.createElement('div');
-        wrapper.style.marginBottom = '20px';
-        wrapper.appendChild(clone);
-        container.appendChild(wrapper);
-      });
-
-      return container;
-    }
-
-    // Función principal para descargar el PDF adjuntando temporalmente al DOM
-    function pdf() {
-      const project = sanitizeFilename(document.getElementById('proyecto').value || 'estimacion');
-      const today = new Date();
-      const dateText = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-      const filename = `estimacion-${project}-${dateText}.pdf`;
-
-      const report = buildPrintableReport();
-      
-      // Adjuntar fuera de pantalla temporalmente para que html2canvas lo lea correctamente
-      report.style.position = 'absolute';
-      report.style.left = '-9999px';
-      report.style.top = '0';
-      document.body.appendChild(report);
-
-      const opt = {
-        margin:       10,
-        filename:     filename,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
-
-      html2pdf().set(opt).from(report).save().then(() => {
-        document.body.removeChild(report);
-      }).catch(() => {
-        if (report.parentNode) document.body.removeChild(report);
-      });
-    }
-
-    function copiar(id) {
-      let text = '';
-      const source = id === 'estimacion' ? buildPrintableReport() : document.getElementById(id);
-      if (source) {
-        text = source.innerText || source.textContent || '';
-      }
-      navigator.clipboard.writeText(text).then(() => alert('Contenido copiado al portapapeles.')).catch(() => alert('No se pudo copiar el contenido.'));
-    }
-
-    // Inicialización predeterminada
-    cambiarTab(0);
-    calcularBloques();
-    calcularCantera();
-    calcularConcreto();
-    calcularAcero();
-  </script>
-</body>
-</html>
+      const f = 1
