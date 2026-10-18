@@ -398,10 +398,6 @@
       <!-- Pie de página con acciones generales -->
       <div class="footer-note mt-4">
         <div class="note-text">💡 <b>Nota:</b> Se recomienda el acompañamiento de un especialista en construcción para toda obra civil.</div>
-        <div class="d-flex gap-2">
-          <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="copiarTodo()">Copiar todo</button>
-          <button class="btn btn-sm btn-success fw-bold" onclick="exportarPDF()">📥 Descargar PDF</button>
-        </div>
       </div>
 
     </div>
@@ -519,7 +515,7 @@
       ]);
     }
 
-    // Renderizador de resultados en pantalla
+    // Renderizador de resultados en pantalla con su botón individual para PDF
     function resultado(id, title, rows) {
       const conCosto = rows.some(r => r[3] !== null);
       const total = rows.reduce((s, r) => s + (r[3] || 0), 0);
@@ -533,7 +529,7 @@
           </div>
           <div class="ms-auto d-flex gap-2">
             <button class="btn btn-sm btn-outline-secondary" onclick="copiarSeccion('${id}')">Copiar</button>
-            <button class="btn btn-sm btn-primary" onclick="exportarPDF()">PDF</button>
+            <button class="btn btn-sm btn-primary" onclick="exportarSeccionPDF('${id}', '${title}')">PDF</button>
           </div>
         </div>
         <div class="table-responsive">
@@ -571,26 +567,11 @@
       }
     }
 
-    function copiarTodo() {
-      calcularBloques(); calcularCantera(); calcularConcreto(); calcularAcero();
-      const text = document.getElementById('estimacion').innerText;
-      navigator.clipboard.writeText(text).then(() => alert('Todo el contenido fue copiado al portapapeles.'));
-    }
-
-    // Método infalible para móviles y PC: Abre el reporte en una pestaña limpia y lanza la impresión nativa (Guardar PDF)
-    function exportarPDF() {
-      calcularBloques();
-      calcularCantera();
-      calcularConcreto();
-      calcularAcero();
-
+    // Función modificada para exportar SOLO la sección seleccionada a PDF
+    function exportarSeccionPDF(id, title) {
       const proyecto = document.getElementById('proyecto').value || 'Proyecto';
       const cliente = document.getElementById('cliente').value || 'Cliente';
-      
-      const resB = document.getElementById('resultado_b').innerHTML;
-      const resC = document.getElementById('resultado_c').innerHTML;
-      const resConc = document.getElementById('resultado_conc').innerHTML;
-      const resA = document.getElementById('resultado_a').innerHTML;
+      const contenidoHTML = document.getElementById(id).innerHTML;
 
       const ventana = window.open('', '_blank');
       if (!ventana) {
@@ -603,29 +584,28 @@
         <html lang="es">
         <head>
           <meta charset="utf-8">
-          <title>Estimación - ${proyecto}</title>
+          <title>${title} - ${proyecto}</title>
           <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
           <style>
-            body { font-family: Arial, sans-serif; padding: 20px; color: #111; background: #fff; }
-            h1 { font-size: 22px; color: #1f2a44; }
-            .result-box { border: 1px solid #dfe7ff; border-radius: 8px; padding: 15px; margin-bottom: 20px; background: #f8fafc; }
-            .btn, button { display: none !important; } /* Ocultar botones en la hoja impresa */
+            body { font-family: Arial, sans-serif; padding: 25px; color: #111; background: #fff; }
+            h2 { font-size: 20px; color: #1f2a44; margin-bottom: 5px; }
+            .result-box { border: 1px solid #dfe7ff; border-radius: 8px; padding: 15px; background: #f8fafc; }
+            .btn, button { display: none !important; } /* Ocultar botones en la impresión */
           </style>
         </head>
         <body>
           <div class="text-center mb-4 border-bottom pb-3">
-            <h1>🏗️ ${proyecto}</h1>
-            <p class="mb-0 text-muted"><b>Cliente:</b> ${cliente} | <b>Elaborado por:</b> Ing. Elio Orozco</p>
+            <h2>🏗️ ${proyecto}</h2>
+            <p class="mb-0 text-small text-muted"><b>Cliente:</b> ${cliente} | <b>Elaborado por:</b> Ing. Elio Orozco</p>
           </div>
-          <div class="mb-3">${resB}</div>
-          <div class="mb-3">${resC}</div>
-          <div class="mb-3">${resConc}</div>
-          <div class="mb-3">${resA}</div>
+          <div class="result-box">
+            ${contenidoHTML}
+          </div>
           <script>
             window.onload = function() {
               setTimeout(() => {
                 window.print();
-              }, 500);
+              }, 400);
             };
           <\/script>
         </body>
