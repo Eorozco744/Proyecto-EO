@@ -594,6 +594,7 @@
       container.style.fontFamily = 'Arial, sans-serif';
       container.style.color = '#1f2937';
       container.style.background = '#ffffff';
+      container.style.width = '210mm';
 
       container.innerHTML = `
         <div style="text-align:center; border-bottom: 2px solid #4f46e5; padding-bottom: 12px; margin-bottom: 20px;">
@@ -622,7 +623,7 @@
       return container;
     }
 
-    // Función unificada para descargar el PDF completo y visible
+    // Función principal para descargar el PDF adjuntando temporalmente al DOM
     function pdf() {
       const project = sanitizeFilename(document.getElementById('proyecto').value || 'estimacion');
       const today = new Date();
@@ -630,6 +631,12 @@
       const filename = `estimacion-${project}-${dateText}.pdf`;
 
       const report = buildPrintableReport();
+      
+      // Adjuntar fuera de pantalla temporalmente para que html2canvas lo lea correctamente
+      report.style.position = 'absolute';
+      report.style.left = '-9999px';
+      report.style.top = '0';
+      document.body.appendChild(report);
 
       const opt = {
         margin:       10,
@@ -639,7 +646,11 @@
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
-      html2pdf().set(opt).from(report).save();
+      html2pdf().set(opt).from(report).save().then(() => {
+        document.body.removeChild(report);
+      }).catch(() => {
+        if (report.parentNode) document.body.removeChild(report);
+      });
     }
 
     function copiar(id) {
