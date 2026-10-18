@@ -573,54 +573,63 @@
       return wrapper;
     }
 
+    // NEW: generate preview and allow download from preview window (avoids blank pages)
     function pdf(id) {
-      // For whole estimation, construct a compact export element to ensure data is included and layout fits on pages
-      let elToExport;
-      if(id === 'estimacion') {
-        elToExport = createExportElement(id);
-      } else {
-        // section export (include header)
+      // Ensure latest values
+      calcularBloques(); calcularCantera(); calcularConcreto(); calcularAcero();
+
+      const project = sanitizeFilename(document.getElementById('proyecto').value || 'estimacion');
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth()+1).padStart(2,'0');
+      const dd = String(today.getDate()).padStart(2,'0');
+      const filename = `estimacion-${project}-${yyyy}-${mm}-${dd}.pdf`;
+
+      // Build export element
+      const exportEl = (id === 'estimacion') ? createExportElement(id) : (function(){
+        // single section export
         const section = document.getElementById(id);
-        if(!section) return alert('Elemento no encontrado para exportar.');
-        // ensure its calculation exists
-        calcularBloques(); calcularCantera(); calcularConcreto(); calcularAcero();
+        const tmp = document.createElement('div');
         const project = document.getElementById('proyecto').value || '';
         const client = document.getElementById('cliente').value || '';
         const today = new Date();
         const yyyy = today.getFullYear();
         const mm = String(today.getMonth()+1).padStart(2,'0');
         const dd = String(today.getDate()).padStart(2,'0');
-        const header = `\n<div style="text-align:center;margin-bottom:8px;">\n  <h2 style=\"margin:0 0 4px 0;\">${escapeHtml(project || 'Estimación de materiales')}</h2>\n  <div style=\"font-size:0.95rem;color:#555;margin-bottom:4px;\">${escapeHtml(client)}</div>\n  <div style=\"font-size:0.85rem;color:#666;\">Fecha: ${yyyy}-${mm}-${dd}</div>\n  <hr style=\"margin-top:8px;margin-bottom:12px;\" />\n</div>\n`;
-        const css = `\n<style>body{font-family: Arial, Helvetica, sans-serif; color:#111} table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px} th,td{border:1px solid #ddd;padding:6px;text-align:left} th{background:#f8fafc}</style>\n`;
-        const wrapper = document.createElement('div');
-        wrapper.innerHTML = css + header + section.innerHTML;
-        elToExport = wrapper;
-      }
+        const header = `<div style="text-align:center;margin-bottom:8px;"><h2 style="margin:0 0 4px 0;">${escapeHtml(project||'Estimación de materiales')}</h2><div style="font-size:0.95rem;color:#555;margin-bottom:4px;">${escapeHtml(client)}</div><div style="font-size:0.85rem;color:#666;">Fecha: ${yyyy}-${mm}-${dd}</div><hr style="margin-top:8px;margin-bottom:12px;" /></div>`;
+        const css = `<style>body{font-family: Arial, Helvetica, sans-serif; color:#111} table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px} th,td{border:1px solid #ddd;padding:6px;text-align:left} th{background:#f8fafc}</style>`;
+        tmp.innerHTML = css + header + (section?section.innerHTML:'');
+        return tmp;
+      })();
 
-      // Build filename
-      const project = sanitizeFilename(document.getElementById('proyecto').value || 'estimacion');
-      const today = new Date();
-      const yyyy = today.getFullYear();
-      const mm = String(today.getMonth()+1).padStart(2,'0');
-      const dd = String(today.getDate()).padStart(2,'0');
-      let filename = 'estimacion-';
-      if(project) filename += project + '-';
-      filename += `${yyyy}-${mm}-${dd}.pdf`;
+      // Append off-screen to ensure html2pdf can render it correctly
+      exportEl.style.position = 'fixed';
+      exportEl.style.left = '-10000px';
+      exportEl.style.top = '-10000px';
+      document.body.appendChild(exportEl);
 
-      // Use html2pdf on the prepared element
-      document.body.appendChild(elToExport);
-      html2pdf().set({
-        margin: 6,
-        filename: filename,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 1, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-      }).from(elToExport).save().then(() => {
-        // cleanup
-        try { document.body.removeChild(elToExport); } catch(e){}
-      }).catch((err)=>{
-        try { document.body.removeChild(elToExport); } catch(e){}
-        alert('Error al generar el PDF: '+(err && err.message?err.message:err));
+      // Use html2pdf to create jsPDF object, then open a preview (blob URL) in new tab with download button
+      html2pdf().from(exportEl).toPdf().get('pdf').then(function (pdf) {
+        try {
+          const blob = pdf.output('blob');
+          const url = URL.createObjectURL(blob);
+          const w = window.open('', '_blank');
+          if(!w) {
+            URL.revokeObjectURL(url);
+            alert('El navegador bloqueó la ventana emergente. Permite popups y vuelve a intentar.');
+            return;
+          }
+          const html = `<!doctype html><html><head><meta charset="utf-8"><title>Previsualizar PDF</title><style>body{margin:0;font-family:Arial,Helvetica,sans-serif} .tools{position:fixed;top:8px;right:8px;z-index:999} .tools a{display:inline-block;margin-left:8px;padding:8px 10px;background:#0d6efd;color:#fff;text-decoration:none;border-radius:6px}</style></head><body><div class="tools"><a href="${url}" download="${filename}">Descargar PDF</a><a href="#" onclick="window.print(); return false;">Imprimir</a></div><iframe src="${url}" style="border:none;width:100%;height:100vh"></iframe></body></html>`;
+          w.document.open();
+          w.document.write(html);
+          w.document.close();
+        } finally {
+          // cleanup temporary element
+          try { document.body.removeChild(exportEl); } catch (e){}
+        }
+      }).catch(function(err){
+        try { document.body.removeChild(exportEl); } catch (e){}
+        alert('Error al generar el PDF: ' + (err && err.message ? err.message : err));
       });
     }
 
