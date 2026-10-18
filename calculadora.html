@@ -244,7 +244,7 @@
       </div>
 
       <!-- TAB 0: BLOQUES -->
-      <div id="tab0" class="tab-content active">
+      <div id="tab0" class="tab-content">
         <div class="example-box"><b>💡 Ejemplo:</b> Un muro de 10 m × 2.5 m con 5% de desperdicio requiere aproximadamente 328 bloques, 6.6 bolsas de cemento y 0.25 m³ de arena.</div>
         <div class="form-card">
           <div class="row g-3">
@@ -403,7 +403,7 @@
         <div class="note-text">💡 <b>Nota:</b> Se recomienda el acompañamiento de un especialista en construcción para toda obra civil.</div>
         <div class="d-flex gap-2">
           <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="copiar('estimacion')">Copiar todo</button>
-          <button class="btn btn-sm btn-success fw-bold" onclick="pdf('estimacion')">Descargar PDF</button>
+          <button class="btn btn-sm btn-success fw-bold" onclick="pdf()">Descargar PDF</button>
         </div>
       </div>
 
@@ -434,13 +434,12 @@
     function cambiarTab(i) {
       document.querySelectorAll('.tab-content').forEach(x => {
         x.style.display = 'none';
-        x.classList.remove('active');
       });
       document.querySelectorAll('.tab-button').forEach(x => x.classList.remove('active'));
+      
       const tab = document.getElementById('tab' + i);
       if (tab) {
         tab.style.display = 'block';
-        tab.classList.add('active');
       }
       const btns = document.querySelectorAll('.tab-button');
       if (btns[i]) btns[i].classList.add('active');
@@ -624,13 +623,13 @@
     }
 
     // Función principal para descargar el PDF
-    function pdf() {
+    function pdf(id) {
       const project = sanitizeFilename(document.getElementById('proyecto').value || 'estimacion');
       const today = new Date();
       const dateText = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
       const filename = `estimacion-${project}-${dateText}.pdf`;
 
-      const report = buildPrintableReport();
+      const report = id ? document.getElementById(id) : buildPrintableReport();
 
       const opt = {
         margin:       10,
@@ -640,7 +639,6 @@
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
 
-      // Se ejecuta la descarga directa con html2pdf
       html2pdf().set(opt).from(report).save();
     }
 
