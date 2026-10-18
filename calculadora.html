@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Calculadora de Materiales - Ing. Elio Orozco</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     :root {
       --primary: #4f46e5;
@@ -28,7 +27,6 @@
       padding: 20px 0;
     }
 
-    /* Dark theme variables */
     body.dark {
       --primary: #8b5cf6;
       --primary-dark: #e6eefc;
@@ -171,7 +169,6 @@
       color: var(--muted);
     }
 
-    /* Footer note: made colors use theme variables to be visible in both themes */
     .footer-note {
       background: var(--card-bg);
       border: 1px solid rgba(0,0,0,0.06);
@@ -194,6 +191,25 @@
 
     .footer-note .note-text { flex: 1; }
 
+    @media print {
+      body * { visibility: hidden; }
+      #printableReport, #printableReport * { visibility: visible; }
+      #printableReport {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: #fff !important;
+        color: #111 !important;
+      }
+      .no-print { display: none !important; }
+      html, body {
+        background: #fff !important;
+      }
+      .table, .table * { break-inside: avoid; }
+      .card-shadow { box-shadow: none !important; }
+    }
+
     @media (max-width: 768px) {
       .tab-button {
         width: 100%;
@@ -206,7 +222,7 @@
 <body>
   <div class="container py-4 py-lg-5">
     <div id="estimacion" class="card card-shadow p-3 p-md-4">
-      <div class="d-flex align-items-start justify-content-between mb-3">
+      <div class="d-flex align-items-start justify-content-between mb-3 no-print">
         <div>
           <h1 class="header-title mb-1">🏗️ Calculadora de Materiales</h1>
           <p class="subheader mb-0">Elaborado por Ing. Elio Orozco</p>
@@ -219,7 +235,7 @@
         </div>
       </div>
 
-      <div class="row g-3 mb-4">
+      <div class="row g-3 mb-4 no-print">
         <div class="col-md-6">
           <label for="proyecto" class="form-label">Nombre del Proyecto</label>
           <input id="proyecto" class="form-control" value="Muro Perimetral">
@@ -230,14 +246,14 @@
         </div>
       </div>
 
-      <div class="d-flex flex-wrap gap-2 mb-4">
+      <div class="d-flex flex-wrap gap-2 mb-4 no-print">
         <button class="btn btn-outline-primary tab-button active" onclick="cambiarTab(0)">🧱 Pared de Bloques</button>
         <button class="btn btn-outline-primary tab-button" onclick="cambiarTab(1)">🪨 Piedra Cantera</button>
         <button class="btn btn-outline-primary tab-button" onclick="cambiarTab(2)">🏗️ Concreto</button>
         <button class="btn btn-outline-primary tab-button" onclick="cambiarTab(3)">⛓️ Acero</button>
       </div>
 
-      <div id="tab0" class="tab-content active">
+      <div id="tab0" class="tab-content active no-print">
         <div class="example-box"><b>💡 Ejemplo:</b> Un muro de 10 m × 2.5 m con 5% de desperdicio requiere aproximadamente 328 bloques, 6.6 bolsas de cemento y 0.25 m³ de arena.</div>
         <div class="form-card">
           <div class="row g-3">
@@ -278,8 +294,8 @@
       </div>
 
       <div id="tab1" class="tab-content" style="display:none;">
-        <div class="example-box"><b>💡 Ejemplo:</b> Un muro de 5 m × 2.75 m con 5% de desperdicio requiere aproximadamente 60 piedras, 2.3 bolsas de cemento y 0.43 m³ de arena.</div>
-        <div class="form-card">
+        <div class="example-box no-print"><b>💡 Ejemplo:</b> Un muro de 5 m × 2.75 m con 5% de desperdicio requiere aproximadamente 60 piedras, 2.3 bolsas de cemento y 0.43 m³ de arena.</div>
+        <div class="form-card no-print">
           <div class="row g-3">
             <div class="col-md-4">
               <label for="largo_c" class="form-label">Largo (m)</label>
@@ -318,8 +334,8 @@
       </div>
 
       <div id="tab2" class="tab-content" style="display:none;">
-        <div class="example-box"><b>💡 Ejemplo:</b> Para 0.88 m³ de concreto 1:2:3 (2800 PSI), se requieren 7.2 sacos de cemento, 0.49 m³ de arena y 0.73 m³ de piedrín.</div>
-        <div class="form-card">
+        <div class="example-box no-print"><b>💡 Ejemplo:</b> Para 0.88 m³ de concreto 1:2:3 (2800 PSI), se requieren 7.2 sacos de cemento, 0.49 m³ de arena y 0.73 m³ de piedrín.</div>
+        <div class="form-card no-print">
           <div class="row g-3">
             <div class="col-md-6">
               <label for="volumen_conc" class="form-label">Volumen de concreto (m³)</label>
@@ -355,8 +371,8 @@
       </div>
 
       <div id="tab3" class="tab-content" style="display:none;">
-        <div class="example-box"><b>💡 Ejemplo:</b> Para 12 m con 4 varillas N4 (1/2\"), se requieren 48 m, aproximadamente 105.19 lb y 8 varillas de 6 m.</div>
-        <div class="form-card">
+        <div class="example-box no-print"><b>💡 Ejemplo:</b> Para 12 m con 4 varillas N4 (1/2\"), se requieren 48 m, aproximadamente 105.19 lb y 8 varillas de 6 m.</div>
+        <div class="form-card no-print">
           <div class="row g-3">
             <div class="col-md-4">
               <label for="longitud_a" class="form-label">Longitud total (m)</label>
@@ -382,7 +398,7 @@
         </div>
       </div>
 
-      <div class="footer-note mt-4">
+      <div class="footer-note mt-4 no-print">
         <div class="note-text">💡 <b>Nota:</b> Se recomienda el acompañamiento de un especialista en construcción para toda obra civil.</div>
         <div class="d-flex gap-2">
           <button class="btn btn-sm btn-light" onclick="copiar('estimacion')">Copiar todo</button>
@@ -394,15 +410,12 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Theme toggle
     const themeToggle = document.getElementById('themeToggle');
     function applyTheme(isDark){
       if(isDark) document.body.classList.add('dark'); else document.body.classList.remove('dark');
       localStorage.setItem('calc_dark', isDark ? '1' : '0');
-      // update switch visual
       themeToggle.checked = isDark;
     }
-    // initialize theme from storage or prefers-color-scheme
     const saved = localStorage.getItem('calc_dark');
     if(saved === null){
       const prefers = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -419,9 +432,12 @@
       });
       document.querySelectorAll('.tab-button').forEach(x => x.classList.remove('active'));
       const tab = document.getElementById('tab' + i);
-      tab.style.display = 'block';
-      tab.classList.add('active');
-      document.querySelectorAll('.tab-button')[i].classList.add('active');
+      if (tab) {
+        tab.style.display = 'block';
+        tab.classList.add('active');
+      }
+      const btns = document.querySelectorAll('.tab-button');
+      if (btns[i]) btns[i].classList.add('active');
     }
 
     const n = id => parseFloat(document.getElementById(id).value || 0);
@@ -498,139 +514,108 @@
     }
 
     function sanitizeFilename(s){
-      return (s||'').toString().trim().replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_\-\.]/g,'');
+      return (s || '').toString().trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_\-\.]/g, '');
     }
 
     function escapeHtml(unsafe) {
-      return (unsafe+'').replace(/[&<>\"]/g, function(m) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]; });
+      return (unsafe + '').replace(/[&<>"']/g, function(m) {
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[m];
+      });
     }
 
-    function createExportElement(id) {
-      // Ensure calculations are up to date
-      calcularBloques();
-      calcularCantera();
-      calcularConcreto();
-      calcularAcero();
-
-      const project = document.getElementById('proyecto').value || '';
-      const client = document.getElementById('cliente').value || '';
-      const today = new Date();
-      const yyyy = today.getFullYear();
-      const mm = String(today.getMonth()+1).padStart(2,'0');
-      const dd = String(today.getDate()).padStart(2,'0');
-
-      // Build header
-      const header = `
-        <div style="text-align:center;margin-bottom:8px;">
-          <h2 style="margin:0 0 4px 0;">${escapeHtml(project || 'Estimación de materiales')}</h2>
-          <div style="font-size:0.95rem;color:#555;margin-bottom:4px;">${escapeHtml(client)}</div>
-          <div style="font-size:0.85rem;color:#666;">Fecha: ${yyyy}-${mm}-${dd}</div>
-          <hr style="margin-top:8px;margin-bottom:12px;" />
-        </div>
-      `;
-
-      // CSS for compact PDF
-      const css = `
-        <style>
-          body{font-family: Arial, Helvetica, sans-serif; color:#111}
-          h2{font-size:18px}
-          .section-title{background:#f3f4f6;padding:6px;border-radius:6px;margin-bottom:6px;font-weight:600}
-          table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px}
-          th,td{border:1px solid #ddd;padding:6px;text-align:left}
-          th{background:#f8fafc}
-          .total{font-weight:700}
-        </style>
-      `;
-
-      const wrapper = document.createElement('div');
-      wrapper.innerHTML = css + header;
-
-      const sections = [
-        {id:'resultado_b', title:'Pared de Bloques'},
-        {id:'resultado_c', title:'Piedra Cantera'},
-        {id:'resultado_conc', title:'Concreto'},
-        {id:'resultado_a', title:'Acero'}
-      ];
-
-      for(const s of sections) {
-        const el = document.getElementById(s.id);
-        if(!el) continue;
-        // if empty, skip
-        if(el.innerHTML.trim() === '') continue;
-        const sec = document.createElement('div');
-        sec.innerHTML = `<div class="section-title">${escapeHtml(s.title)}</div>` + el.innerHTML;
-        wrapper.appendChild(sec);
-      }
-
-      // If no sections, add a note
-      if(wrapper.children.length <= 1) {
-        const note = document.createElement('div');
-        note.style.marginTop = '8px';
-        note.innerHTML = '<div>No hay resultados para exportar. Por favor genera al menos un cálculo antes de exportar.</div>';
-        wrapper.appendChild(note);
-      }
-
-      return wrapper;
-    }
-
-    // NEW: generate preview and allow download from preview window (avoids blank pages)
-    function pdf(id) {
-      // Ensure latest values
+    function buildPrintableReport() {
       calcularBloques(); calcularCantera(); calcularConcreto(); calcularAcero();
 
+      const project = document.getElementById('proyecto').value || 'Estimación de materiales';
+      const client = document.getElementById('cliente').value || 'Cliente General';
+      const today = new Date();
+      const dateText = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+      const container = document.createElement('div');
+      container.id = 'printableReport';
+      container.style.fontFamily = 'Arial, Helvetica, sans-serif';
+      container.style.padding = '20px';
+      container.style.background = '#fff';
+      container.style.color = '#111';
+      container.innerHTML = `
+        <div style="text-align:center; margin-bottom:18px;">
+          <h2 style="margin:0; font-size:26px;">${escapeHtml(project)}</h2>
+          <div style="font-size:14px; color:#555; margin-top:8px;">Cliente: ${escapeHtml(client)}</div>
+          <div style="font-size:12px; color:#666; margin-top:4px;">Fecha: ${dateText}</div>
+        </div>
+        <div style="border-top:1px solid #ddd; margin:10px 0 18px 0;"></div>
+      `;
+
+      const sectionIds = ['resultado_b', 'resultado_c', 'resultado_conc', 'resultado_a'];
+      const labels = ['🧱 Pared de Bloques', '🪨 Piedra Cantera', '🏗️ Concreto', '⛓️ Acero'];
+      sectionIds.forEach((id, idx) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const clone = el.cloneNode(true);
+        clone.querySelectorAll('button').forEach(btn => btn.remove());
+        const wrapper = document.createElement('div');
+        wrapper.style.marginBottom = '20px';
+        wrapper.innerHTML = `<h3 style="font-size:18px; margin:0 0 8px 0;">${escapeHtml(labels[idx])}</h3>`;
+        wrapper.appendChild(clone);
+        container.appendChild(wrapper);
+      });
+
+      return container;
+    }
+
+    function pdf() {
       const project = sanitizeFilename(document.getElementById('proyecto').value || 'estimacion');
       const today = new Date();
-      const yyyy = today.getFullYear();
-      const mm = String(today.getMonth()+1).padStart(2,'0');
-      const dd = String(today.getDate()).padStart(2,'0');
-      const filename = `estimacion-${project}-${yyyy}-${mm}-${dd}.pdf`;
+      const dateText = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+      const filename = `estimacion-${project}-${dateText}.pdf`;
+      const report = buildPrintableReport();
 
-      // Build export element
-      const exportEl = (id === 'estimacion') ? createExportElement(id) : (function(){
-        // single section export
-        const section = document.getElementById(id);
-        const tmp = document.createElement('div');
-        const project = document.getElementById('proyecto').value || '';
-        const client = document.getElementById('cliente').value || '';
-        const today = new Date();
-        const yyyy = today.getFullYear();
-        const mm = String(today.getMonth()+1).padStart(2,'0');
-        const dd = String(today.getDate()).padStart(2,'0');
-        const header = `<div style="text-align:center;margin-bottom:8px;"><h2 style="margin:0 0 4px 0;">${escapeHtml(project||'Estimación de materiales')}</h2><div style="font-size:0.95rem;color:#555;margin-bottom:4px;">${escapeHtml(client)}</div><div style="font-size:0.85rem;color:#666;">Fecha: ${yyyy}-${mm}-${dd}</div><hr style="margin-top:8px;margin-bottom:12px;" /></div>`;
-        const css = `<style>body{font-family: Arial, Helvetica, sans-serif; color:#111} table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px} th,td{border:1px solid #ddd;padding:6px;text-align:left} th{background:#f8fafc}</style>`;
-        tmp.innerHTML = css + header + (section?section.innerHTML:'');
-        return tmp;
-      })();
+      const w = window.open('', '_blank');
+      if (!w) {
+        alert('El navegador bloqueó la ventana emergente. Permite pop-ups y vuelve a intentar.');
+        return;
+      }
 
-      // Append off-screen to ensure html2pdf can render it correctly
-      exportEl.style.position = 'fixed';
-      exportEl.style.left = '-10000px';
-      exportEl.style.top = '-10000px';
-      document.body.appendChild(exportEl);
+      const html = `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+          <meta charset="UTF-8" />
+          <title>${escapeHtml(project)}</title>
+          <style>
+            @page { size: A4 landscape; margin: 10mm; }
+            html, body { margin: 0; padding: 0; background: #fff; }
+            body { font-family: Arial, Helvetica, sans-serif; }
+            table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+            th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+            th { background: #f4f4f4; }
+            .alert { background:#ecfdf5; border:1px solid #86efac; padding:8px; border-radius:6px; font-weight:700; }
+            .badge-soft { display:inline-block; background:#eef2ff; color:#4338ca; padding:4px 8px; border-radius:999px; font-size:11px; }
+            .result-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+            .result-icon { width:38px; height:38px; background:#4f46e5; border-radius:10px; color:#fff; display:inline-flex; align-items:center; justify-content:center; font-weight:700; }
+            .mb-0 { margin-bottom:0 !important; }
+          </style>
+        </head>
+        <body>
+          ${report.outerHTML}
+          <script>
+            setTimeout(() => {
+              window.print();
+            }, 350);
+          <\/script>
+        </body>
+        </html>
+      `;
 
-      // Use html2pdf to create jsPDF object, then open a preview (blob URL) in new tab with download button
-      html2pdf().from(exportEl).toPdf().get('pdf').then(function (pdf) {
-        try {
-          const blob = pdf.output('blob');
-          const url = URL.createObjectURL(blob);
-          const w = window.open('', '_blank');
-          if(!w) {
-            URL.revokeObjectURL(url);
-            alert('El navegador bloqueó la ventana emergente. Permite popups y vuelve a intentar.');
-            return;
-          }
-          const html = `<!doctype html><html><head><meta charset="utf-8"><title>Previsualizar PDF</title><style>body{margin:0;font-family:Arial,Helvetica,sans-serif} .tools{position:fixed;top:8px;right:8px;z-index:999} .tools a{display:inline-block;margin-left:8px;padding:8px 10px;background:#0d6efd;color:#fff;text-decoration:none;border-radius:6px}</style></head><body><div class="tools"><a href="${url}" download="${filename}">Descargar PDF</a><a href="#" onclick="window.print(); return false;">Imprimir</a></div><iframe src="${url}" style="border:none;width:100%;height:100vh"></iframe></body></html>`;
-          w.document.open();
-          w.document.write(html);
-          w.document.close();
-        } finally {
-          // cleanup temporary element
-          try { document.body.removeChild(exportEl); } catch (e){}
-        }
-      }).catch(function(err){
-        try { document.body.removeChild(exportEl); } catch (e){}
-        alert('Error al generar el PDF: ' + (err && err.message ? err.message : err));
-      });
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+
+      // open directly in print preview
+      try {
+        const btn = w.document.querySelector('button');
+        if (btn) btn.remove();
+      } catch (e) {}
     }
 
     function resultado(id, title, rows) {
@@ -678,21 +663,14 @@
     }
 
     function copiar(id) {
-      // Build the same compact export element and copy its text to clipboard
-      if(id === 'estimacion'){
-        const tmp = createExportElement(id);
-        const text = tmp.innerText || tmp.textContent || '';
-        navigator.clipboard.writeText(text).then(() => alert('Contenido copiado al portapapeles.'))
-          .catch(()=>alert('No se pudo copiar el contenido.'));
-      } else {
-        const el = document.getElementById(id);
-        if (!el) return alert('Elemento no encontrado para copiar.');
-        navigator.clipboard.writeText(el.innerText).then(() => alert('Contenido copiado al portapapeles.'))
-          .catch(() => alert('No se pudo copiar el contenido.'));
+      let text = '';
+      const source = id === 'estimacion' ? buildPrintableReport() : document.getElementById(id);
+      if (source) {
+        text = source.innerText || source.textContent || '';
       }
+      navigator.clipboard.writeText(text).then(() => alert('Contenido copiado al portapapeles.')).catch(() => alert('No se pudo copiar el contenido.'));
     }
 
-    // Inicializar
     cambiarTab(0);
     calcularBloques();
     calcularCantera();
