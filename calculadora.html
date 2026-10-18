@@ -546,7 +546,7 @@
           </div>
           <div class="ms-auto d-flex gap-2">
             <button class="btn btn-sm btn-outline-secondary" onclick="copiar('${id}')">Copiar</button>
-            <button class="btn btn-sm btn-primary" onclick="pdf('${id}')">PDF</button>
+            <button class="btn btn-sm btn-primary" onclick="pdf()">PDF</button>
           </div>
         </div>
         <div class="table-responsive">
@@ -622,14 +622,14 @@
       return container;
     }
 
-    // Función principal para descargar el PDF
-    function pdf(id) {
+    // Función unificada para descargar el PDF completo y visible
+    function pdf() {
       const project = sanitizeFilename(document.getElementById('proyecto').value || 'estimacion');
       const today = new Date();
       const dateText = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
       const filename = `estimacion-${project}-${dateText}.pdf`;
 
-      const report = id ? document.getElementById(id) : buildPrintableReport();
+      const report = buildPrintableReport();
 
       const opt = {
         margin:       10,
