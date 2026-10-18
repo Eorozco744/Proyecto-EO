@@ -486,36 +486,127 @@
       return (s||'').toString().trim().replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_\-\.]/g,'');
     }
 
-    function pdf(id) {
-      const el = document.getElementById(id);
-      if (!el) return alert('Elemento no encontrado para exportar.');
+    function escapeHtml(unsafe) {
+      return (unsafe+'').replace(/[&<>"]/g, function(m) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]; });
+    }
 
-      // Obtain project name and date for filename
+    function createExportElement(id) {
+      // Ensure calculations are up to date
+      calcularBloques();
+      calcularCantera();
+      calcularConcreto();
+      calcularAcero();
+
+      const project = document.getElementById('proyecto').value || '';
+      const client = document.getElementById('cliente').value || '';
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth()+1).padStart(2,'0');
+      const dd = String(today.getDate()).padStart(2,'0');
+
+      // Build header
+      const header = `
+        <div style="text-align:center;margin-bottom:8px;">
+          <h2 style="margin:0 0 4px 0;">${escapeHtml(project || 'Estimación de materiales')}</h2>
+          <div style="font-size:0.95rem;color:#555;margin-bottom:4px;">${escapeHtml(client)}</div>
+          <div style="font-size:0.85rem;color:#666;">Fecha: ${yyyy}-${mm}-${dd}</div>
+          <hr style="margin-top:8px;margin-bottom:12px;" />
+        </div>
+      `;
+
+      // CSS for compact PDF
+      const css = `
+        <style>
+          body{font-family: Arial, Helvetica, sans-serif; color:#111}
+          h2{font-size:18px}
+          .section-title{background:#f3f4f6;padding:6px;border-radius:6px;margin-bottom:6px;font-weight:600}
+          table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px}
+          th,td{border:1px solid #ddd;padding:6px;text-align:left}
+          th{background:#f8fafc}
+          .total{font-weight:700}
+        </style>
+      `;
+
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = css + header;
+
+      const sections = [
+        {id:'resultado_b', title:'Pared de Bloques'},
+        {id:'resultado_c', title:'Piedra Cantera'},
+        {id:'resultado_conc', title:'Concreto'},
+        {id:'resultado_a', title:'Acero'}
+      ];
+
+      for(const s of sections) {
+        const el = document.getElementById(s.id);
+        if(!el) continue;
+        // if empty, skip
+        if(el.innerHTML.trim() === '') continue;
+        const sec = document.createElement('div');
+        sec.innerHTML = `<div class="section-title">${escapeHtml(s.title)}</div>` + el.innerHTML;
+        wrapper.appendChild(sec);
+      }
+
+      // If no sections, add a note
+      if(wrapper.children.length <= 1) {
+        const note = document.createElement('div');
+        note.style.marginTop = '8px';
+        note.innerHTML = '<div>No hay resultados para exportar. Por favor genera al menos un cálculo antes de exportar.</div>';
+        wrapper.appendChild(note);
+      }
+
+      return wrapper;
+    }
+
+    function pdf(id) {
+      // For whole estimation, construct a compact export element to ensure data is included and layout fits on pages
+      let elToExport;
+      if(id === 'estimacion') {
+        elToExport = createExportElement(id);
+      } else {
+        // section export (include header)
+        const section = document.getElementById(id);
+        if(!section) return alert('Elemento no encontrado para exportar.');
+        // ensure its calculation exists
+        calcularBloques(); calcularCantera(); calcularConcreto(); calcularAcero();
+        const project = document.getElementById('proyecto').value || '';
+        const client = document.getElementById('cliente').value || '';
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth()+1).padStart(2,'0');
+        const dd = String(today.getDate()).padStart(2,'0');
+        const header = `\n<div style="text-align:center;margin-bottom:8px;">\n  <h2 style=\"margin:0 0 4px 0;\">${escapeHtml(project || 'Estimación de materiales')}</h2>\n  <div style=\"font-size:0.95rem;color:#555;margin-bottom:4px;\">${escapeHtml(client)}</div>\n  <div style=\"font-size:0.85rem;color:#666;\">Fecha: ${yyyy}-${mm}-${dd}</div>\n  <hr style=\"margin-top:8px;margin-bottom:12px;\" />\n</div>\n`;
+        const css = `\n<style>body{font-family: Arial, Helvetica, sans-serif; color:#111} table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px} th,td{border:1px solid #ddd;padding:6px;text-align:left} th{background:#f8fafc}</style>\n`;
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = css + header + section.innerHTML;
+        elToExport = wrapper;
+      }
+
+      // Build filename
       const project = sanitizeFilename(document.getElementById('proyecto').value || 'estimacion');
       const today = new Date();
       const yyyy = today.getFullYear();
       const mm = String(today.getMonth()+1).padStart(2,'0');
       const dd = String(today.getDate()).padStart(2,'0');
       let filename = 'estimacion-';
-
       if(project) filename += project + '-';
-
-      // If exporting a section, include the section title
-      const h5 = el.querySelector('h5');
-      if(h5){
-        const section = sanitizeFilename(h5.innerText.replace(/[^\w\s\-]/g,''));
-        if(section) filename += section + '-';
-      }
-
       filename += `${yyyy}-${mm}-${dd}.pdf`;
 
+      // Use html2pdf on the prepared element
+      document.body.appendChild(elToExport);
       html2pdf().set({
-        margin: 10,
+        margin: 8,
         filename: filename,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
+        html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      }).from(el).save();
+      }).from(elToExport).save().then(() => {
+        // cleanup
+        try { document.body.removeChild(elToExport); } catch(e){}
+      }).catch((err)=>{
+        try { document.body.removeChild(elToExport); } catch(e){}
+        alert('Error al generar el PDF: '+(err && err.message?err.message:err));
+      });
     }
 
     function resultado(id, title, rows) {
@@ -563,10 +654,18 @@
     }
 
     function copiar(id) {
-      const el = document.getElementById(id);
-      if (!el) return alert('Elemento no encontrado para copiar.');
-      navigator.clipboard.writeText(el.innerText).then(() => alert('Contenido copiado al portapapeles.'))
-        .catch(() => alert('No se pudo copiar el contenido.'));
+      // Build the same compact export element and copy its text to clipboard
+      if(id === 'estimacion'){
+        const tmp = createExportElement(id);
+        const text = tmp.innerText || tmp.textContent || '';
+        navigator.clipboard.writeText(text).then(() => alert('Contenido copiado al portapapeles.'))
+          .catch(()=>alert('No se pudo copiar el contenido.'));
+      } else {
+        const el = document.getElementById(id);
+        if (!el) return alert('Elemento no encontrado para copiar.');
+        navigator.clipboard.writeText(el.innerText).then(() => alert('Contenido copiado al portapapeles.'))
+          .catch(() => alert('No se pudo copiar el contenido.'));
+      }
     }
 
     // Inicializar
