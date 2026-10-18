@@ -270,7 +270,7 @@
               <input id="precio_arena_b" type="number" class="form-control" value="1250">
             </div>
             <div class="col-md-6">
-              <label for="precio_piedra_b" class="form-label">Precio piedra (m³)</label>
+              <label for="precio_piedra_b" class="form-label">Precio piedrín (m³)</label>
               <input id="precio_piedra_b" type="number" class="form-control" value="1350">
             </div>
           </div>
@@ -299,7 +299,7 @@
               <input id="desp_c" type="number" class="form-control" value="5">
             </div>
             <div class="col-md-6">
-              <label for="precio_piedra_c" class="form-label">Precio piedra (unidad)</label>
+              <label for="precio_piedra_c" class="form-label">Precio piedra cantera (unidad)</label>
               <input id="precio_piedra_c" type="number" class="form-control" value="75">
             </div>
             <div class="col-md-6">
@@ -311,7 +311,7 @@
               <input id="precio_arena_c" type="number" class="form-control" value="1250">
             </div>
             <div class="col-md-6">
-              <label for="precio_piedra_cantera" class="form-label">Precio grava (m³)</label>
+              <label for="precio_piedra_cantera" class="form-label">Precio piedrín (m³)</label>
               <input id="precio_piedra_cantera" type="number" class="form-control" value="1350">
             </div>
           </div>
@@ -461,13 +461,13 @@
       const bloques = Math.round(area * 12.5 * f);
       const cemento = Math.round(area * 0.25 * f * 10) / 10;
       const arena = Math.round(area * 0.025 * f * 100) / 100;
-      const piedra = Math.round(area * 0.03 * f * 100) / 100;
+      const piedrin = Math.round(area * 0.03 * f * 100) / 100;
 
       resultado('resultado_b', '🧱 Cálculo de Bloques', [
         ['Bloques', bloques, 'Unidades', costo(bloques, 'precio_bloque')],
         ['Cemento', cemento, 'Bolsas de 42.5 kg', costo(cemento, 'precio_cemento_b')],
         ['Arena', arena, 'm³', costo(arena, 'precio_arena_b')],
-        ['Piedra', piedra, 'm³', costo(piedra, 'precio_piedra_b')]
+        ['Piedrín', piedrin, 'm³', costo(piedrin, 'precio_piedra_b')]
       ]);
     }
 
@@ -477,13 +477,13 @@
       const piedras = Math.round(area * 4.17 * f);
       const cemento = Math.round(area * 0.18 * f * 10) / 10;
       const arena = Math.round(area * 0.03 * f * 100) / 100;
-      const grava = Math.round(area * 0.04 * f * 100) / 100;
+      const piedrin = Math.round(area * 0.04 * f * 100) / 100;
 
       resultado('resultado_c', '🪨 Cálculo de Piedra Cantera', [
         ['Piedras Canteras', piedras, 'Unidades', costo(piedras, 'precio_piedra_c')],
         ['Cemento', cemento, 'Bolsas de 42.5 kg', costo(cemento, 'precio_cemento_c')],
         ['Arena', arena, 'm³', costo(arena, 'precio_arena_c')],
-        ['Grava', grava, 'm³', costo(grava, 'precio_piedra_cantera')]
+        ['Piedrín', piedrin, 'm³', costo(piedrin, 'precio_piedra_cantera')]
       ]);
     }
 
@@ -567,7 +567,7 @@
       }
     }
 
-    // Función modificada para exportar SOLO la sección seleccionada a PDF
+    // Función para exportar SOLO la sección seleccionada a PDF
     function exportarSeccionPDF(id, title) {
       const proyecto = document.getElementById('proyecto').value || 'Proyecto';
       const cliente = document.getElementById('cliente').value || 'Cliente';
